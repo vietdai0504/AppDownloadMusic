@@ -1,6 +1,6 @@
 # AppDownloadMusicandVideo
 
-Ứng dụng Python sử dụng thư viện Tkinter để tải nhạc từ YouTube và nền tảng khác.
+Ứng dụng Python sử dụng thư viện Tkinter để tải nhạc, video từ YouTube và nền tảng khác.
 
 ## Cài đặt
 
