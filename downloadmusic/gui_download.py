@@ -18,8 +18,11 @@ def download_content():
     try:
         ydl_opts = {
             'outtmpl': os.path.join(save_path, f"{file_name}.%(ext)s"),
-            'format': 'bestaudio/best' if download_type == 1 else f'bestvideo[height<={resolution}]+bestaudio/best',
+            'format': 'mp4',
+            'quiet' : True,
         }
+        if resolution:  # Chỉ thêm độ phân giải nếu được chọn
+            ydl_opts['format'] = f"bestvideo[height={resolution.rstrip('p')}]+bestaudio/best"
         with YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(link, download=True)
             if download_type == 1:  # Convert to mp3 if audio download
@@ -27,9 +30,11 @@ def download_content():
                 audio_path = os.path.splitext(video_path)[0] + '.mp3'
                 
                 # Ensure pydub finds ffmpeg
-                AudioSegment.converter = which("ffmpeg")
-                AudioSegment.ffmpeg = which("ffmpeg")
-                AudioSegment.ffprobe = which("ffprobe")
+                ffmpeg_path = which("ffmpeg")  # Lấy đường dẫn đến ffmpeg
+                if ffmpeg_path:
+                    AudioSegment.converter = ffmpeg_path
+                    AudioSegment.ffmpeg = ffmpeg_path
+                    AudioSegment.ffprobe = ffmpeg_path
                 
                 audio = AudioSegment.from_file(video_path)
                 audio.export(audio_path, format="mp3")
@@ -59,7 +64,8 @@ def fetch_resolutions():
             formats = info_dict.get('formats', [])
             resolutions = [f"{f['height']}p" for f in formats if f.get('height') and f.get('vcodec') != 'none']
             resolutions = sorted(set(resolutions), key=lambda x: int(x.rstrip('p')))
-            resolution_var.set(resolutions[0])
+
+            # Cập nhật menu độ phân giải
             resolution_menu['menu'].delete(0, 'end')
             for res in resolutions:
                 resolution_menu['menu'].add_command(label=res, command=lambda value=res: resolution_var.set(value))
@@ -107,6 +113,7 @@ Radiobutton(frame, text="Tải Video", variable=download_type_var, value=2, bg="
 
 # Lựa chọn độ phân giải video
 resolution_var = StringVar()
+resolution_var.set("")  # Khởi tạo giá trị ban đầu là rỗng
 resolution_label = Label(frame, text="Chọn độ phân giải:", bg="lightblue", font=("Helvetica", 10))
 resolution_label.grid(row=5, column=0, padx=10, pady=10, sticky="e")
 resolution_menu = OptionMenu(frame, resolution_var, "")
